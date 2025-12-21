@@ -14,8 +14,10 @@ st.caption("Baseline method using RapidFuzz token_set_ratio")
 
 @st.cache_data
 def load_test_data():
+    # 讀取測試集 TSV 檔
     df = pd.read_csv("test.tsv", sep="\t")
 
+    #影像資料分析
     # 從 image_url 解析出文字
     df["txt_from_url"] = df["image_url"].apply(
         lambda x: urllib.parse.unquote(x)
@@ -29,16 +31,16 @@ def load_captions():
     df = pd.read_csv("test_caption_list.csv")
     return df["caption_title_and_reference_description"].astype(str).tolist()
 
-
 df_test = load_test_data()
 captions = load_captions()
 
 
-# UI
+# 介面分左右
 left, right = st.columns([1.1, 1])
 
 with left:
     st.subheader("選擇測試影像")
+    # 讓使用者手動輸入索引值選擇特定的測試資料
     sample_idx = st.number_input(
         "選擇測試資料 index",
         min_value=0,
@@ -46,6 +48,7 @@ with left:
         value=0
     )
 
+    ## 調整 Top-K 結果數量的滑桿(1~10)
     topk = st.slider(
         "Top-K 結果數",
         min_value=1,
@@ -61,7 +64,7 @@ with left:
 
 with right:
     st.subheader("匹配結果")
-
+    ## 按鈕被點擊後執行的運算
     if run_btn:
         query_text = df_test.loc[sample_idx, "txt_from_url"]
 
@@ -69,9 +72,9 @@ with right:
             results = process.extract(
                 query_text,
                 captions,
-                scorer=fuzz.token_set_ratio,
-                processor=None,
-                limit=topk
+                scorer=fuzz.token_set_ratio, # 核心演算法：計算詞彙集合重合度
+                processor=None,              # 維持原始解析文字
+                limit=topk                   # 限制回傳數量
             )
 
         st.success("比對完成")
@@ -87,4 +90,5 @@ with right:
 
     if not run_btn:
         st.info("請選擇一筆測試資料，然後點擊「開始文字比對」")
+
 
